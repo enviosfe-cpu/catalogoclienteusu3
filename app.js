@@ -4,6 +4,27 @@
  */
 const state = { catalog: null, cart: {}, gsUrl: "", vendor: "", isSyncing: false };
 
+// Convierte links de vista de Drive (/file/d/.../view) a imagen directa
+function directImageUrl(u) {
+  const s = String(u || "").trim();
+  if (!s) return s;
+  const m = s.match(/drive\.google\.com\/file\/d\/([^/]+)/)
+    || s.match(/drive\.google\.com\/open\?.*[?&]id=([^&]+)/)
+    || s.match(/drive\.google\.com\/uc\?.*[?&]id=([^&]+)/);
+  if (m && m[1]) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1000`;
+  return s;
+}
+
+// Normaliza imágenes del catálogo (logo, productos y oferta)
+function normalizeCatalogImages(cat) {
+  if (!cat) return;
+  if (cat.company && cat.company.logo) cat.company.logo = directImageUrl(cat.company.logo);
+  (cat.products || []).forEach(p => { if (p.image) p.image = directImageUrl(p.image); });
+  if (cat.offer && cat.offer.image) {
+    cat.offer.image = String(cat.offer.image).split(/[,\n]+/).map(s => directImageUrl(s.trim())).filter(Boolean).join(',');
+  }
+}
+
 // Registro de Service Worker para PWA Offline (solo en http/https)
 if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
   navigator.serviceWorker.register('./sw.js')
@@ -66,6 +87,7 @@ function loadCatalogOfflineFirst() {
 
   if (data && data.products && data.products.length > 0) {
     state.catalog = data;
+    normalizeCatalogImages(state.catalog);
     if (loading) loading.classList.add('hidden');
     if (empty) empty.classList.add('hidden');
     applyBrand();
@@ -98,6 +120,7 @@ async function syncCatalogInBackground() {
     if (json.status !== "success" || !json.public) throw new Error((json && json.message) || "Sin respuesta");
 
     state.catalog = json.public;
+    normalizeCatalogImages(state.catalog);
     try {
       localStorage.setItem('cc_catalog_' + state.vendor, JSON.stringify(json.public));
       localStorage.setItem('cc_gs_' + state.vendor, state.gsUrl);
@@ -161,8 +184,10 @@ function applyBrand() {
   const logo = document.getElementById('cc-logo');
   if (logo) {
     if (company.logo) {
-      logo.src = company.logo;
+      logo.onerror = () => { logo.onerror = null; logo.src = './logo.png'; };
+      logo.src = directImageUrl(company.logo);
     } else {
+      logo.onerror = null;
       logo.src = './logo.png';
     }
   }
@@ -205,8 +230,7 @@ function openOffer() {
   }
 }
 
-function parseOfferImages(raw) {
-  return String(raw || '')
+function parseOfferImages(raw) {  return String(raw || '')
     .split(/[,\n]+/)
     .map(s => s.trim())
     .filter(Boolean)

@@ -1,6 +1,6 @@
 {
-  "name": "Catálogo Digital DHC4",
-  "short_name": "Catálogo DHC4",
+  "name": "Catálogo Digital",
+  "short_name": "Catálogo",
   "description": "Catálogo de productos digital e interactivo 100% offline",
   "start_url": "./index.html",
   "display": "standalone",
