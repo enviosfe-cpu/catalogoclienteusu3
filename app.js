@@ -1,5 +1,5 @@
 /**
- * Catálogo Cliente DHC4 - 100% Offline Engine
+ * Catálogo Cliente - 100% Offline Engine
  * Carga de datos local-first sin descargas bloqueantes al iniciar.
  */
 const state = { catalog: null, cart: {}, gsUrl: "", vendor: "", isSyncing: false };
@@ -28,13 +28,13 @@ function normalizeCatalogImages(cat) {
 // Registro de Service Worker para PWA Offline (solo en http/https)
 if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
   navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('SW Catálogo Cliente DHC4 activo (modo offline habilitado).'))
+    .then(() => console.log('SW Catálogo Cliente activo (modo offline habilitado).'))
     .catch((err) => console.log('SW error:', err));
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   const q = new URLSearchParams(window.location.search);
-  state.vendor = (q.get('v') || window.CC_VENDOR || "DHC4").trim().toUpperCase();
+  state.vendor = (q.get('v') || window.CC_VENDOR || "").trim().toUpperCase();
   state.gsUrl = (q.get('gs') || window.CC_GSURL || "").trim();
 
   // Enlaces viejos sin gs: reutilizar el último GS usado por este vendedor
